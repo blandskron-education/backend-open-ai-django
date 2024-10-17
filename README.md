@@ -1,0 +1,2 @@
+# BackendDjangoConOpenAi
+Proyecto educativo
