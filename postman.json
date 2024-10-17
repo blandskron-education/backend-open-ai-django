@@ -1,0 +1,38 @@
+{
+    "info": {
+        "name": "Movie Recommendations API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+        "name": "Recommend Movie",
+        "request": {
+            "method": "POST",
+            "header": [
+            {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+            }
+            ],
+            "body": {
+            "mode": "raw",
+            "raw": "{\n    \"message\": \"Quiero ver una buena película de acción\"\n}"
+            },
+            "url": {
+            "raw": "http://localhost:8000/api/recommend/",
+            "protocol": "http",
+            "host": [
+                "localhost"
+            ],
+            "port": "8000",
+            "path": [
+                "api",
+                "recommend"
+            ]
+            }
+        },
+        "response": []
+        }
+    ]
+}
