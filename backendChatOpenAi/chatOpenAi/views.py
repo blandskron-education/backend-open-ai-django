@@ -41,8 +41,8 @@ def recommend_movie(request):
         else:
             # Generic response when no movie match is found
             return JsonResponse({
-                #'response': f"Recuerda que solo recomiendo películas, pero: {recommendation}"
-                'response': f"Recuerda que solo puedo responder con informacion relacionada a nuestra base de datos de peliculas"
+                'response': f"No estoy preparado para responder otro tipo de preguntas, pero: {recommendation}"
+                #'response': f"Recuerda que solo puedo responder con informacion relacionada a nuestra base de datos de peliculas"
             })
     except Exception as e:
         return JsonResponse({'error': f'Error processing request: {str(e)}'})
