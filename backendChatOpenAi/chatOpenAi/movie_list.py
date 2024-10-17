@@ -5,7 +5,7 @@ MOVIE_LIST = [
         "title": "John Wick",
         "genre": "Action",
         "overview": "An ex-hitman comes out of retirement to track down the gangsters that killed his dog and stole his car.",
-        "poster_url": "https://image.tmdb.org/t/p/w500/qIegbn6DSUYmggfwxOBNOVS35q.jpg"
+        "poster_url": "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/fZPSd91yGE9fCcCe6OoQr6E3Bev.jpg"
     },
     {
         "title": "Mad Max: Fury Road",
