@@ -15,8 +15,6 @@ from decouple import config
 
 
 OPENAI_API_KEY = config('OPENAI_API_KEY')
-TMDB_API_KEY = config('TMDB_API_KEY')
-TMDB_API_READ_ACCESS_TOKEN = config('TMDB_API_READ_ACCESS_TOKEN')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
