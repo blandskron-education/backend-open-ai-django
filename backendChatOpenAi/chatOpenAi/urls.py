@@ -1,6 +1,10 @@
 from django.urls import path
-from .views import recommend_movie
+
+from .views import health, recommend_movie
+
+app_name = "chatOpenAi"
 
 urlpatterns = [
-    path('recommend/', recommend_movie),
+    path("health/", health, name="health"),
+    path("recommend/", recommend_movie, name="recommend"),
 ]

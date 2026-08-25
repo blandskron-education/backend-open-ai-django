@@ -1,49 +1,98 @@
-import openai
-from django.http import JsonResponse
+import logging
+
+from django.conf import settings
+from openai import OpenAI, OpenAIError
+from rest_framework import status
 from rest_framework.decorators import api_view
-import os
-from .movie_list import MOVIE_LIST
+from rest_framework.response import Response
 
-# Configure your OpenAI API key
-openai.api_key = os.getenv('OPENAI_API_KEY')
+from .models import Movie
+from .serializers import MovieRecommendationSerializer, RecommendationRequestSerializer
 
-@api_view(['POST'])
+
+logger = logging.getLogger(__name__)
+
+
+def generate_recommendation(user_input: str) -> str:
+    """Call the external API in one place so tests can replace the network boundary."""
+
+    client = OpenAI(api_key=settings.OPENAI_API_KEY, max_retries=1, timeout=20.0)
+    completion = client.chat.completions.create(
+        model=settings.OPENAI_MODEL,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Eres un asistente especializado en películas. Responde en "
+                    "español y menciona títulos concretos de forma breve."
+                ),
+            },
+            {
+                "role": "user",
+                "content": f"Recomienda una película según esta preferencia: {user_input}",
+            },
+        ],
+        max_tokens=150,
+    )
+    return (completion.choices[0].message.content or "").strip()
+
+
+@api_view(["GET"])
+def health(request):
+    """Dependency-free endpoint for students and Docker healthchecks."""
+
+    return Response({"status": "ok"})
+
+
+@api_view(["POST"])
 def recommend_movie(request):
-    user_input = request.data.get('message', '')
+    serializer = RecommendationRequestSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    if not settings.OPENAI_API_KEY:
+        return Response(
+            {
+                "error": (
+                    "OPENAI_API_KEY no está configurada. Consulta .env.example "
+                    "y reinicia el servidor."
+                )
+            },
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
 
     try:
-        if not openai.api_key:
-            raise ValueError("The OpenAI API key is not set.")
-        
-        # Fetch response from OpenAI based on user input
-        client = openai.OpenAI(api_key=openai.api_key)
-        completion = client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": f"Recomienda una película o responde de manera coherente sobre esto: {user_input}"}
-            ],
-            max_tokens=150
+        recommendation = generate_recommendation(serializer.validated_data["message"])
+    except OpenAIError:
+        logger.exception("The OpenAI request failed")
+        return Response(
+            {"error": "No fue posible obtener una recomendación en este momento."},
+            status=status.HTTP_502_BAD_GATEWAY,
         )
-        
-        recommendation = completion.choices[0].message.content.strip()
-        print(f"OpenAI Recommendation: {recommendation}")
 
-        # Attempt to find up to 3 movie matches
-        matched_movies = [
-            movie for movie in MOVIE_LIST 
-            if movie['title'].lower() in recommendation.lower()
-        ][:3] # Limit to 3 recommendations
+    matched_movies = [
+        movie
+        for movie in Movie.objects.all()
+        if movie.title.casefold() in recommendation.casefold()
+    ][:3]
 
-        if matched_movies:
-            response_text = f"Puedo recomendarte estas películas en base a lo que mencionaste: {recommendation}"
-            return JsonResponse({'response': response_text, 'movies': matched_movies})
-        else:
-            # Generic response when no movie match is found
-            return JsonResponse({
-                'response': f"No estoy preparado para responder otro tipo de preguntas, pero: {recommendation}"
-                #'response': f"Recuerda que solo puedo responder con informacion relacionada a nuestra base de datos de peliculas"
-            })
-    except Exception as e:
-        return JsonResponse({'error': f'Error processing request: {str(e)}'})
-    
+    if matched_movies:
+        movies = MovieRecommendationSerializer(matched_movies, many=True).data
+        return Response(
+            {
+                "response": (
+                    "Puedo recomendarte estas películas según lo que mencionaste: "
+                    f"{recommendation}"
+                ),
+                "movies": movies,
+            }
+        )
+
+    return Response(
+        {
+            "response": (
+                "No encontré el título recomendado en el catálogo local, pero la "
+                f"recomendación fue: {recommendation}"
+            ),
+            "movies": [],
+        }
+    )

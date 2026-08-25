@@ -5,6 +5,21 @@
     },
     "item": [
         {
+            "name": "Health Check",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:8000/api/health/",
+                    "protocol": "http",
+                    "host": ["localhost"],
+                    "port": "8000",
+                    "path": ["api", "health", ""]
+                }
+            },
+            "response": []
+        },
+        {
         "name": "Recommend Movie",
         "request": {
             "method": "POST",
